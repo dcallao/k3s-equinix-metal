@@ -12,15 +12,15 @@ variable "plan_node" {
 }
 
 variable "node_count" {
-	type = number
-	default = "0"
-	description = "Number of K3s nodes"
+  type        = number
+  default     = "0"
+  description = "Number of K3s nodes"
 }
 
-variable "k3s_ha"{
-	type = bool
-	default = true
-	description = "K3s HA (aka 3 control plane nodes)"
+variable "k3s_ha" {
+  type        = bool
+  default     = true
+  description = "K3s HA (aka 3 control plane nodes)"
 }
 
 variable "metro" {
@@ -52,19 +52,19 @@ variable "ssh_private_key_path" {
 }
 
 variable "control_plane_hostnames" {
-	type = string
-	description = "Control plane hostnames (i.e.- cp will generate cp01, cp02,...)"
-	default = "control-plane"
+  type        = string
+  description = "Control plane hostnames (i.e.- cp will generate cp01, cp02,...)"
+  default     = "control-plane"
 }
 
 variable "node_hostnames" {
-	type = string
-	description = "Node hostnames (i.e.- no will generate no01, no02,...)"
-	default = "node"
+  type        = string
+  description = "Node hostnames (i.e.- no will generate no01, no02,...)"
+  default     = "node"
 }
 
 variable "custom_k3s_token" {
-	type = string
-	description = "K3s token used for nodes to join the cluster"
-	default = null
+  type        = string
+  description = "K3s token used for nodes to join the cluster"
+  default     = null
 }
