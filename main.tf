@@ -76,5 +76,5 @@ resource "equinix_metal_device" "nodes" {
   project_id       = var.metal_project_id
   count            = var.node_count
   depends_on       = [equinix_metal_device.control_plane_master]
-  user_data        = templatefile("scripts/user-data-all-in-one.tpl", { k3s_token = local.k3s_token, API_IP = equinix_metal_reserved_ip_block.api_vip_addr[0].network })
+  user_data        = templatefile("scripts/user-data-nodes.tpl", { k3s_token = local.k3s_token, API_IP = equinix_metal_reserved_ip_block.api_vip_addr[0].network })
 }

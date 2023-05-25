@@ -2,12 +2,10 @@
 set -euo pipefail
 apt update && apt install curl -y
 
-K3S_TOKEN="${k3s_token}"
-
-# HA cluster, first node
-export INSTALL_K3S_EXEC="server --cluster-init --write-kubeconfig-mode=644 --tls-san=${API_IP} --tls-san=${API_IP}.sslip.io --disable=servicelb"
-
-curl -sfL https://get.k3s.io | sh -
+curl -sfL https://get.k3s.io | \
+  K3S_TOKEN="${k3s_token}" \
+  INSTALL_K3S_EXEC="server --cluster-init --write-kubeconfig-mode=644 --tls-san=${API_IP} --tls-san=${API_IP}.sslip.io --disable=servicelb" \
+  sh -
 systemctl enable --now k3s
 
 # Create a configure_bird.sh script that will do the heavy work
