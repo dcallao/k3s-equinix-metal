@@ -3,7 +3,8 @@ locals {
 }
 
 resource "random_string" "random_k3s_token" {
-  length = 16
+  length  = 16
+  special = false
 }
 
 resource "equinix_metal_device" "all_in_one" {
@@ -18,13 +19,14 @@ resource "equinix_metal_device" "all_in_one" {
 }
 
 resource "equinix_metal_device" "control_plane_master" {
-  hostname         = "${var.control_plane_hostnames}-00"
+  hostname         = "${var.control_plane_hostnames}-0"
   plan             = var.plan_control_plane
   metro            = var.metro
   operating_system = var.os
   billing_cycle    = "hourly"
   project_id       = var.metal_project_id
   count            = var.k3s_ha ? 1 : 0
+  user_data        = templatefile("scripts/user-data-control-plane-master.tpl", { k3s_token = local.k3s_token, API_IP = equinix_metal_reserved_ip_block.api_vip_addr[0].network })
 }
 
 resource "equinix_metal_reserved_ip_block" "api_vip_addr" {
@@ -35,16 +37,8 @@ resource "equinix_metal_reserved_ip_block" "api_vip_addr" {
   quantity   = 1
 }
 
-resource "equinix_metal_reserved_ip_block" "ingress_vip_addr" {
-  count      = var.k3s_ha ? 1 : 0
-  project_id = var.metal_project_id
-  metro      = var.metro
-  type       = "public_ipv4"
-  quantity   = 1
-}
-
 resource "equinix_metal_device" "control_plane_others" {
-  hostname         = "${var.control_plane_hostnames}-${count.index}"
+  hostname         = format("%s-%d", var.control_plane_hostnames, count.index + 1)
   plan             = var.plan_control_plane
   metro            = var.metro
   operating_system = var.os
@@ -52,6 +46,7 @@ resource "equinix_metal_device" "control_plane_others" {
   project_id       = var.metal_project_id
   count            = var.k3s_ha ? 2 : 0
   depends_on       = [equinix_metal_device.control_plane_master]
+  user_data        = templatefile("scripts/user-data-control-plane.tpl", { k3s_token = local.k3s_token, API_IP = equinix_metal_reserved_ip_block.api_vip_addr[0].network })
 }
 
 resource "equinix_metal_bgp_session" "control_plane_master" {
@@ -81,5 +76,5 @@ resource "equinix_metal_device" "nodes" {
   project_id       = var.metal_project_id
   count            = var.node_count
   depends_on       = [equinix_metal_device.control_plane_master]
-  user_data        = templatefile("scripts/user-data-all-in-one.tpl", { k3s_token = local.k3s_token, api_ip = equinix_metal_reserved_ip_block.api_vip_addr[0].network })
+  user_data        = templatefile("scripts/user-data-all-in-one.tpl", { k3s_token = local.k3s_token, API_IP = equinix_metal_reserved_ip_block.api_vip_addr[0].network })
 }
