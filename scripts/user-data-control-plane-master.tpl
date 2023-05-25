@@ -95,8 +95,8 @@ echo "net.ipv4.ip_forward=1" | tee /etc/sysctl.d/99-ip-forward.conf
 sysctl --load /etc/sysctl.d/99-ip-forward.conf
 
 # Debian usually starts the service after being installed, but just in case
-systemctl is-enabled bird || systemctl enable bird
-systemctl is-active bird || systemctl restart bird
+systemctl enable bird
+systemctl restart bird
 EOS
 
 chmod a+x /usr/local/bin/configure_bird.sh
