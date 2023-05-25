@@ -10,21 +10,6 @@ export INSTALL_K3S_EXEC="server --server https://${API_IP}:6443 --write-kubeconf
 curl -sfL https://get.k3s.io | sh -
 systemctl enable --now k3s
 
-# Configure the interfaces
-if ! grep -q 'lo:0' /etc/network/interfaces; then
-  cat <<-EOF >>/etc/network/interfaces
-	auto lo:0
-	iface lo:0 inet static
-		address ${API_IP}
-		netmask 255.255.255.255
-	EOF
-  ifup lo:0
-fi
-
-# Enable IP forward for bird
-echo "net.ipv4.ip_forward=1" | tee /etc/sysctl.d/99-ip-forward.conf
-sysctl --load /etc/sysctl.d/99-ip-forward.conf
-
 # Create a configure_bird.sh script that will do the heavy work
 # As the metadata doesn't include the bgp information at boot (it needs to be explicitely done)
 # it will wait indefitenly until it does.
@@ -92,6 +77,24 @@ protocol bgp neighbor_v4_2 {
   neighbor $${PEER_IP_2} as $${ASN_AS};
 }
 EOF
+
+# Wait for the node to be available, meaning the K8s API is available
+while ! kubectl wait --for condition=ready node $(cat /etc/hostname | tr '[:upper:]' '[:lower:]') --timeout=60s; do sleep 2 ; done
+
+# Configure the interfaces
+if ! grep -q 'lo:0' /etc/network/interfaces; then
+  cat <<-EOF >>/etc/network/interfaces
+	auto lo:0
+	iface lo:0 inet static
+		address ${API_IP}
+		netmask 255.255.255.255
+	EOF
+  ifup lo:0
+fi
+
+# Enable IP forward for bird
+echo "net.ipv4.ip_forward=1" | tee /etc/sysctl.d/99-ip-forward.conf
+sysctl --load /etc/sysctl.d/99-ip-forward.conf
 
 # Debian usually starts the service after being installed, but just in case
 systemctl is-enabled bird || systemctl enable bird
